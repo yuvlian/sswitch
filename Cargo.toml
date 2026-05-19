@@ -1,0 +1,13 @@
+[workspace]
+members = ["sswitch", "vdf"]
+resolver = "3"
+
+[workspace.dependencies]
+vdf = { path = "vdf/" }
+
+[profile.release]
+opt-level = 3
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"

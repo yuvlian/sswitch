@@ -1,0 +1,7 @@
+**/target/
+**/refs/
+*.lock
+.prebuilt
+*.log
+tags.txt
+custom_steam_path
