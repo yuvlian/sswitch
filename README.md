@@ -4,7 +4,7 @@ peak CLI steam account switcher on god
 
 ## features
 
-- written in rust
+- written in rust with 0 external dependency
 
 - optimized (i think)
 
