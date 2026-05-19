@@ -40,7 +40,7 @@ uhh idk what else to type js read the command reference dawg (or source code uwu
 2. build
 
    ```
-   cargo install --git https://github.com/yuvlian/sswitch
+   cargo install --git https://github.com/yuvlian/sswitch --package sswitch
    ```
 
    you can also do:
@@ -48,7 +48,7 @@ uhh idk what else to type js read the command reference dawg (or source code uwu
    ```
    git clone https://github.com/yuvlian/sswitch.git
    cd sswitch
-   cargo install --path .
+   cargo install --path sswitch
    ```
 
 NOTE: `cargo install` automatically builds with release profile & adds bin to `.cargo/bin` which is in PATH env
