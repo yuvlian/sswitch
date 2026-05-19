@@ -18,19 +18,24 @@ impl WindowsPlatform {
         for line in stdout.lines() {
             if line.to_lowercase().contains(&value_name.to_lowercase()) {
                 let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.len() >= 3 {
-                    if parts[1].eq_ignore_ascii_case("REG_SZ") {
-                        let idx = line.find("REG_SZ").unwrap() + 6;
-                        return Some(line[idx..].trim().to_string());
-                    } else if parts[1].eq_ignore_ascii_case("REG_DWORD") {
-                        let hex_str = parts[2].trim_start_matches("0x");
-                        if let Ok(val) = u32::from_str_radix(hex_str, 16) {
-                            return Some(val.to_string());
-                        }
-                    }
+
+                if let Some(kind) = parts.get(1)
+                    && kind.eq_ignore_ascii_case("REG_SZ")
+                    && let Some(idx) = line.find("REG_SZ")
+                {
+                    return Some(line[idx + 6..].trim().to_string());
+                }
+
+                if let Some(kind) = parts.get(1)
+                    && let Some(value) = parts.get(2)
+                    && kind.eq_ignore_ascii_case("REG_DWORD")
+                    && let Ok(val) = u32::from_str_radix(value.trim_start_matches("0x"), 16)
+                {
+                    return Some(val.to_string());
                 }
             }
         }
+
         None
     }
 
