@@ -1,6 +1,8 @@
 # sswitch
 
-peak CLI steam account switcher on god
+peak CLI steam account switcher on god.
+
+mostly made this for myself cuz i got a bunch of CS prime redeem keys and switching with the steam's default switcher is... annoying.
 
 ## features
 
@@ -40,7 +42,7 @@ uhh idk what else to type js read the command reference dawg (or source code uwu
 2. build
 
    ```
-   cargo install --git https://github.com/yuvlian/sswitch --package sswitch
+   cargo install --git https://github.com/yuvlian/sswitch --bin sswitch
    ```
 
    you can also do:
