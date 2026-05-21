@@ -55,60 +55,63 @@ fn tokenize(input: &str) -> Result<Vec<Token>, String> {
     let mut chars = input.chars().peekable();
 
     while let Some(&c) = chars.peek() {
-        if c.is_whitespace() {
-            chars.next();
-            continue;
-        }
+        match c {
+            x if x.is_whitespace() => {
+                chars.next();
+                continue;
+            }
 
-        if c == '/' {
-            chars.next();
-            if chars.peek() == Some(&'/') {
+            '/' => {
+                chars.next();
+                if chars.peek() == Some(&'/') {
+                    for nc in chars.by_ref() {
+                        if nc == '\n' || nc == '\r' {
+                            break;
+                        }
+                    }
+                    continue;
+                } else {
+                    return Err("unexpected single slash '/'".to_string());
+                }
+            }
+            '{' => {
+                chars.next();
+                tokens.push(Token::OpenBrace);
+                continue;
+            }
+
+            '}' => {
+                chars.next();
+                tokens.push(Token::CloseBrace);
+                continue;
+            }
+
+            '"' => {
+                chars.next();
+                let mut s = String::with_capacity(16);
+                let mut escaped = false;
+                let mut matched = false;
                 for nc in chars.by_ref() {
-                    if nc == '\n' || nc == '\r' {
+                    if escaped {
+                        s.push(nc);
+                        escaped = false;
+                    } else if nc == '\\' {
+                        escaped = true;
+                    } else if nc == '"' {
+                        matched = true;
                         break;
+                    } else {
+                        s.push(nc);
                     }
                 }
-                continue;
-            } else {
-                return Err("unexpected single slash '/'".into());
-            }
-        }
-
-        if c == '{' {
-            chars.next();
-            tokens.push(Token::OpenBrace);
-            continue;
-        }
-
-        if c == '}' {
-            chars.next();
-            tokens.push(Token::CloseBrace);
-            continue;
-        }
-
-        if c == '"' {
-            chars.next();
-            let mut s = String::with_capacity(16);
-            let mut escaped = false;
-            let mut matched = false;
-            for nc in chars.by_ref() {
-                if escaped {
-                    s.push(nc);
-                    escaped = false;
-                } else if nc == '\\' {
-                    escaped = true;
-                } else if nc == '"' {
-                    matched = true;
-                    break;
-                } else {
-                    s.push(nc);
+                if !matched {
+                    return Err("unterminated double quote".to_string());
                 }
+                tokens.push(Token::Str(s));
+                continue;
             }
-            if !matched {
-                return Err("unterminated double quote".into());
-            }
-            tokens.push(Token::Str(s));
-            continue;
+
+            _ => {}
         }
 
         let mut s = String::with_capacity(16);
@@ -159,7 +162,7 @@ fn parse_map(tokens: &[Token], index: &mut usize) -> Result<BTreeMap<String, Vdf
                 }
             }
             Token::OpenBrace => {
-                return Err("unexpected '{' where key was expected".into());
+                return Err("unexpected '{' where key was expected".to_string());
             }
         }
     }
@@ -171,13 +174,52 @@ pub fn parse(input: &str) -> Result<BTreeMap<String, VdfValue>, String> {
     let mut index = 0;
     let map = parse_map(&tokens, &mut index)?;
     if index < tokens.len() {
-        return Err("unexpected tokens after parsing root map completed".into());
+        return Err("unexpected tokens after parsing root map completed".to_string());
     }
     Ok(map)
 }
 
+fn escaped_len(s: &str) -> usize {
+    s.chars()
+        .map(|c| match c {
+            '"' | '\\' | '\n' | '\r' | '\t' => 2,
+            _ => c.len_utf8(),
+        })
+        .sum()
+}
+
+fn size_hint_map(map: &BTreeMap<String, VdfValue>, indent: usize) -> usize {
+    let mut size = 0;
+
+    for (key, val) in map {
+        match val {
+            VdfValue::Str(s) => {
+                // tabs for indent
+                size += indent;
+                // opening + separator + closing formatting:
+                // "\"" + "\"\t\t\"" + "\"\n"
+                size += 6;
+                size += escaped_len(key);
+                size += escaped_len(s);
+            }
+            VdfValue::Obj(sub_map) => {
+                // indent + "\"" + key + "\"\n"
+                size += indent + 3 + escaped_len(key);
+                // indent + "{\n"
+                size += indent + 2;
+                // nested content
+                size += size_hint_map(sub_map, indent + 1);
+                // indent + "}\n"
+                size += indent + 2;
+            }
+        }
+    }
+
+    size
+}
+
 pub fn stringify(map: &BTreeMap<String, VdfValue>) -> String {
-    let mut out = String::with_capacity(1024);
+    let mut out = String::with_capacity(size_hint_map(map, 0));
     stringify_internal(map, 0, &mut out);
     out
 }
@@ -213,7 +255,6 @@ fn stringify_internal(map: &BTreeMap<String, VdfValue>, indent: usize, out: &mut
 }
 
 fn write_escaped_str(s: &str, out: &mut String) {
-    out.reserve(s.len());
     for c in s.chars() {
         match c {
             '"' => out.push_str("\\\""),
