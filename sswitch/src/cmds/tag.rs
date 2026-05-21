@@ -14,7 +14,7 @@ pub fn run(
         return Err("tag name must be alphanumeric".to_string());
     }
 
-    let reserved = [
+    const RESERVED: &[&str] = &[
         "stop",
         "path",
         "skip-offline",
@@ -24,7 +24,8 @@ pub fn run(
         "tags",
         "help",
     ];
-    if reserved.contains(&tag_name.as_str()) {
+
+    if RESERVED.contains(&tag_name.as_str()) {
         return Err(format!(
             "'{}' is a reserved command and cannot be used as a tag",
             tag_name

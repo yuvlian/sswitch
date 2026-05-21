@@ -8,19 +8,18 @@ pub mod tags;
 pub mod untag;
 
 pub fn print_help() {
-    println!("sswitch || https://github.com/yuvlian/sswitch");
-    println!();
-    println!("usage:");
-    println!("  sswitch                  list accounts, switch, and launch steam");
-    println!(
-        "  sswitch <tag>            instantly switch & launch steam to the account with this tag"
+    print!(
+"sswitch || https://github.com/yuvlian/sswitch
+
+usage:
+  sswitch                  list accounts, switch, and launch steam
+  sswitch <tag>            instantly switch & launch steam to the account with this tag
+  sswitch stop             stop the steam client
+  sswitch path <path>      set custom steam folder path
+  sswitch skip-offline     enable skipofflinemodewarning for all accounts
+  sswitch tag <tag> <acc>  assign a tag to an account (<acc> can be index, username, display name, or steam id)
+  sswitch untag <tag>      remove an existing tag
+  sswitch tags             list all configured tags
+"
     );
-    println!("  sswitch stop             stop the steam client");
-    println!("  sswitch path <path>      set custom steam folder path");
-    println!("  sswitch skip-offline     enable skipofflinemodewarning for all accounts");
-    println!(
-        "  sswitch tag <tag> <acc>  assign a tag to an account (<acc> can be index, username, display name, or steam id)"
-    );
-    println!("  sswitch untag <tag>      remove an existing tag");
-    println!("  sswitch tags             list all configured tags");
 }

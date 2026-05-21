@@ -52,7 +52,7 @@ impl WindowsPlatform {
             .output()
             .map_err(|e| e.to_string())?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).into());
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
         }
         Ok(())
     }
@@ -78,7 +78,7 @@ impl WindowsPlatform {
             .output()
             .map_err(|e| e.to_string())?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).into());
+            return Err(String::from_utf8_lossy(&output.stderr).to_string());
         }
         Ok(())
     }
@@ -94,14 +94,15 @@ impl SteamPlatform for WindowsPlatform {
             return Some(path);
         }
 
-        let standard_paths = [
+        const STANDARD_PATHS: &[&str] = &[
             r"C:\Program Files (x86)\Steam",
             r"C:\Program Files\Steam",
             r"D:\Steam",
             r"D:\Games\Steam",
             r"E:\Steam",
         ];
-        for &sp in &standard_paths {
+
+        for &sp in STANDARD_PATHS {
             let path = PathBuf::from(sp);
             if path.exists() {
                 return Some(path);

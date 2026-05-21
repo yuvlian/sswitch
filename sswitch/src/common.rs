@@ -1,5 +1,6 @@
 use crate::os::SteamPlatform;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -112,7 +113,6 @@ pub fn load_tags() -> (HashMap<String, String>, usize) {
 }
 
 pub fn save_tags(tags: &HashMap<String, String>, capacity: usize) -> Result<(), String> {
-    use std::fmt::Write;
     let mut content = String::with_capacity(capacity);
     for (tag, steam_id) in tags {
         let _ = writeln!(content, "{tag}={steam_id}");
@@ -120,15 +120,14 @@ pub fn save_tags(tags: &HashMap<String, String>, capacity: usize) -> Result<(), 
     fs::write("tags.txt", content).map_err(|e| e.to_string())
 }
 
-pub fn print_simple_accounts_list(platform: &dyn SteamPlatform) {
-    let steam_path = match get_steam_path(platform) {
-        Ok(p) => p,
-        Err(_) => return,
+pub fn simple_account_list(platform: &dyn SteamPlatform) -> String {
+    let Ok(steam_path) = get_steam_path(platform) else {
+        return String::new();
     };
 
     let accounts = get_accounts(&steam_path);
     if accounts.is_empty() {
-        return;
+        return String::new();
     }
 
     let active_user = platform
@@ -136,31 +135,65 @@ pub fn print_simple_accounts_list(platform: &dyn SteamPlatform) {
         .unwrap_or_else(|_| "None".to_string());
 
     let (tags, _) = load_tags();
-    println!("\navailable accounts:");
+
+    let estimated_per_account = 64;
+    let mut out = String::with_capacity(22 + accounts.len() * estimated_per_account);
+
+    out.push_str("\navailable accounts:\n");
+
     for (i, acc) in accounts.iter().enumerate() {
-        let mut status = Vec::with_capacity(3);
+        let mut statuses = [""; 2];
+        let mut status_count = 0;
+
         if acc.username.eq_ignore_ascii_case(&active_user) {
-            status.push("active".to_string());
+            statuses[status_count] = "active";
+            status_count += 1;
         }
         if acc.most_recent {
-            status.push("last used".to_string());
+            statuses[status_count] = "last used";
+            status_count += 1;
         }
-        for (tag, steam_id) in &tags {
-            if steam_id == &acc.steam_id {
-                status.push(format!("tag: {}", tag));
+
+        let tag = tags
+            .iter()
+            .find(|(_, steam_id)| *steam_id == &acc.steam_id)
+            .map(|(tag, _)| tag.as_str());
+
+        let _ = write!(out, "  {}. {} ({})", i + 1, acc.display_name, acc.username);
+
+        if status_count != 0 || tag.is_some() {
+            out.push_str(" [");
+            let mut first = true;
+            for status in statuses.iter().take(status_count) {
+                if !first {
+                    out.push_str(", ");
+                }
+                first = false;
+                out.push_str(status);
             }
+
+            if let Some(tag) = tag {
+                if !first {
+                    out.push_str(", ");
+                }
+                out.push_str("tag: ");
+                out.push_str(tag);
+            }
+            out.push(']');
         }
-        let status_str = if status.is_empty() {
-            String::new()
-        } else {
-            format!(" [{}]", status.join(", "))
-        };
-        println!(
-            "  {}. {} ({}){}",
-            i + 1,
-            acc.display_name,
-            acc.username,
-            status_str
-        );
+        out.push('\n');
     }
+    out
+}
+
+pub fn account_help_text(platform: &dyn SteamPlatform) -> String {
+    let accounts = simple_account_list(platform);
+    let mut out = String::with_capacity(205 + accounts.len());
+    out.push_str("where <acc> can be:\n");
+    out.push_str("  - the number of the account in the list below (e.g. 1)\n");
+    out.push_str("  - the login username (e.g. gabelogannewell)\n");
+    out.push_str("  - the display name (e.g. Gabe Newell)\n");
+    out.push_str("  - the steam ID (e.g. 76561197960287930)\n");
+    out.push_str(&accounts);
+    out
 }

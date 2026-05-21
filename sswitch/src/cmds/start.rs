@@ -9,7 +9,8 @@ pub fn run(platform: &dyn SteamPlatform) -> Result<(), String> {
     let accounts = get_accounts(&steam_path);
     if accounts.is_empty() {
         return Err(
-            "no login profiles found in loginusers.vdf.\nlogin to steam at least once first".into(),
+            "no login profiles found in loginusers.vdf.\nlogin to steam at least once first"
+                .to_string(),
         );
     }
 
@@ -83,5 +84,5 @@ pub fn run(platform: &dyn SteamPlatform) -> Result<(), String> {
         return Ok(());
     }
 
-    Err("invalid selection".into())
+    Err("invalid selection".to_string())
 }
